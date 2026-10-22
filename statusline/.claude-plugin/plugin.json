@@ -1,0 +1,60 @@
+{
+  "name": "statusline",
+  "version": "0.1.0",
+  "description": "Status band above the prompt: context bar, rate limits, git branch, lines changed, tokens and cost, like the claude-statusline script.",
+  "license": "MIT",
+  "author": {
+    "name": "Luis Mayoral",
+    "url": "https://github.com/mayoral"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "theme": {
+      "title": "Color theme",
+      "type": "string",
+      "description": "catppuccin follows the Theme setting (Latte on a light theme, Mocha on a dark one); catppuccin-latte and catppuccin-mocha force one; default keeps the script's terminal colors",
+      "options": [
+        "catppuccin",
+        "catppuccin-mocha",
+        "catppuccin-latte",
+        "default"
+      ],
+      "default": "catppuccin"
+    },
+    "statusLine": {
+      "title": "Status line under the prompt",
+      "type": "string",
+      "description": "Also pin a one-line summary under the prompt: desktop (while the desktop app is attached, which hides the band behind its next-step box), always, or off",
+      "options": [
+        "desktop",
+        "always",
+        "off"
+      ],
+      "default": "desktop"
+    },
+    "col1Width": {
+      "title": "First column width",
+      "type": "number",
+      "description": "Width of the first column, in cells",
+      "default": 40
+    },
+    "col2Width": {
+      "title": "Second column width",
+      "type": "number",
+      "description": "Width of the second column, in cells",
+      "default": 40
+    },
+    "contextBarWidth": {
+      "title": "Context bar width",
+      "type": "number",
+      "description": "Width of the context-window bar, in cells",
+      "default": 25
+    },
+    "rateBarWidth": {
+      "title": "Rate-limit bar width",
+      "type": "number",
+      "description": "Width of each rate-limit bar, in cells",
+      "default": 20
+    }
+  }
+}
