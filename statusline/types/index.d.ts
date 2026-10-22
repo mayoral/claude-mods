@@ -24,7 +24,10 @@ export type Snapshot = {
   /** When the session began, in the same milliseconds. */
   startedAt: number
   model: string
+  /** The engine's version, as `claude --version` prints it. */
   version: string
+  /** The desktop app's version, in a session it started; null elsewhere. */
+  appVersion: string | null
   /** The session's project root and current directory, absolute. */
   root: string
   cwd: string

@@ -57,6 +57,8 @@ type World = {
   appearance?: 'light' | 'dark'
   /** The surfaces attached; the desktop alone when not given. */
   surfaces?: readonly ('terminal' | 'desktop')[]
+  /** The desktop app's version in the environment; not given, a terminal session. */
+  appVersion?: string
   store?: Record<string, unknown>
 }
 
@@ -98,7 +100,7 @@ const engine = (on: On, world: World) => {
     const { Text } = $.ui.resolve(e)
     return <Text>engine</Text>
   })
-  mock.env(on, { HOME: '/Users/me' })
+  mock.env(on, { HOME: '/Users/me', ...(world.appVersion ? { CLAUDE_CODE_DESKTOP_APP_VERSION: world.appVersion } : {}) })
   mock.store(on, world.store ?? {})
 }
 
@@ -137,6 +139,7 @@ test('the band draws the four rows of the script, on the terminal and the deskto
     // Row 2: project under ~, version, 7d window.
     expect(await textOf(ui, /^~\/work\/app$/)).toBe('~/work/app')
     expect(await textOf(ui, /^2\.1\.308$/)).toBe('2.1.308')
+    expect(await textOf(ui, /Version: /)).not.toContain('(app')
     expect(await textOf(ui, /7d: /)).toContain('12% (2d 3h)')
     // Row 3: lines, no worktree, branch with dirty marker and arrows.
     expect(await textOf(ui, /^\+0$/)).toBe('+0')
@@ -154,6 +157,19 @@ test('the band draws the four rows of the script, on the terminal and the deskto
 
     await ui.unmount()
   }
+})
+
+test('in a session the desktop app started, the Version cell adds the app\'s version', async ($, on) => {
+  const clock = mock.clock(on, { now: NOW })
+  engine(on, { usage: usageOf(), files: {}, gitShape: SHAPE, gitStatus: STATUS, appVersion: '3.1623.4' })
+
+  await $.session.start({ cwd: ROOT, surface: 'desktop', isInteractive: true })
+  await clock.settle()
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(await textOf(ui, /^2\.1\.308$/)).toBe('2.1.308')
+  expect(await textOf(ui, /^ \(app 3\.1623\.4\)$/)).toBe(' (app 3.1623.4)')
+  await ui.unmount()
 })
 
 test('a linked worktree and a detached HEAD are named as the script names them', async ($, on) => {

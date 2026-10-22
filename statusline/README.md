@@ -13,6 +13,7 @@ Session duration | Tokens   | Cost
 - **Rate limits**: the 5-hour and 7-day usage bars, each with a `(2d 3h)`-style countdown to its reset.
 - **Git**: the current branch (or `@sha` when detached), a dirty marker (`*`), ahead/behind arrows (`↑2 ↓1`) and a `wt:` cell inside a linked worktree.
 - **Session stats**: lines added and removed by the edit tools, input and output tokens, wall-clock and model-request time, running cost in USD.
+- **Version**: Claude Code's, the engine running the session, as the script shows it; in a session the desktop app started, the app's version beside it (`2.1.308 (app 3.1623.4)`).
 
 The colors follow [Catppuccin](https://catppuccin.com), Latte on a light background and Mocha on a dark one, chosen by the mode the app or the terminal is in.
 

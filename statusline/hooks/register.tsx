@@ -307,6 +307,13 @@ const branchCell = (palette: Palette, git: GitInfo | null): Cell => {
   return cell
 }
 
+/** The engine's version and, in a session the desktop app started, the app's. */
+const versionCell = (palette: Palette, snap: Snapshot): Cell => {
+  const cell = label(palette, 'Version', snap.version, palette.accent)
+  if (snap.appVersion) cell.push(inRole(` (app ${snap.appVersion})`, palette.muted))
+  return cell
+}
+
 const sessionCell = (palette: Palette, snap: Snapshot, count: Counters): Cell => {
   const cell = label(palette, 'session', fmtDuration(snap.at - snap.startedAt))
   if (count.apiMs > 0) cell.push(plain(` (api: ${fmtDuration(count.apiMs)})`))
@@ -327,7 +334,7 @@ const gridOf = (palette: Palette, snap: Snapshot, count: Counters, layout: Layou
   ],
   [
     snap.root === '' ? [] : [colored(tildify(snap.root, snap.home), palette.path)],
-    snap.version === '' ? [] : label(palette, 'Version', snap.version, palette.accent),
+    snap.version === '' ? [] : versionCell(palette, snap),
     rateCell(palette, '7d', 'seven_day', snap, layout),
   ],
   [
@@ -626,7 +633,7 @@ let lastRender: RenderReport | null = null
 let surveyAsks = 0
 
 const takeSnapshot = async ($: EngineInterface): Promise<void> => {
-  const [usage, model, version, root, cwd, home, appData, now, config] = await Promise.all([
+  const [usage, model, version, root, cwd, home, appData, appVersion, now, config] = await Promise.all([
     $.session.usage(),
     $.session.model(),
     $.session.version(),
@@ -634,6 +641,7 @@ const takeSnapshot = async ($: EngineInterface): Promise<void> => {
     $.session.cwd(),
     $.env.get('HOME'),
     $.env.get('APPDATA'),
+    $.env.get('CLAUDE_CODE_DESKTOP_APP_VERSION'),
     $.clock.now(),
     $.config.list(),
   ])
@@ -642,6 +650,7 @@ const takeSnapshot = async ($: EngineInterface): Promise<void> => {
     startedAt: usage.startedAt,
     model,
     version: version.version,
+    appVersion: appVersion ?? null,
     root,
     cwd,
     home: home ?? '',
