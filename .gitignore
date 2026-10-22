@@ -1,0 +1,5 @@
+# Written by the engine beside a mod it loads from its folder
+.claude-plugin/types/
+.mcpb-cache/
+.DS_Store
+*.log
