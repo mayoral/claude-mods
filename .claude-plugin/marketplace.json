@@ -1,0 +1,12 @@
+{
+  "name": "claude-mods",
+  "description": "Mods for Claude Code by Luis Mayoral: plugins of function hooks that change the interface, starting with a status band above the prompt.",
+  "owner": { "name": "Luis Mayoral", "url": "https://github.com/mayoral" },
+  "plugins": [
+    {
+      "name": "statusline",
+      "source": "./statusline",
+      "description": "Status band above the prompt: context bar, rate limits, git branch, lines changed, tokens and cost, like the claude-statusline script."
+    }
+  ]
+}
