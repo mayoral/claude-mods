@@ -397,6 +397,37 @@ test('with the status line off, nothing is pinned', { options: { statusLine: 'of
   expect(pinned.every(text => text === undefined)).toBe(true)
 })
 
+test('the demo fills every cell with made-up figures, and live brings the real ones back', async ($, on) => {
+  const clock = mock.clock(on, { now: NOW })
+  engine(on, { usage: usageOf(), files: {}, gitShape: SHAPE, gitStatus: STATUS })
+  const run = (args: string) =>
+    $.command.run({ command: 'statusband', args, origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 120 } })
+
+  await $.session.start({ cwd: ROOT, surface: 'desktop', isInteractive: true })
+  await clock.settle()
+
+  await run('demo')
+  const demo = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(await textOf(demo, /^claude-mods-login$/)).toBe('claude-mods-login')
+  expect(await textOf(demo, /^feature\/login$/)).toBe('feature/login')
+  expect(await textOf(demo, /^↑2 ↓1$/)).toBe('↑2 ↓1')
+  expect(await textOf(demo, /^\+128$/)).toBe('+128')
+  expect(await textOf(demo, /5h: /)).toContain('81% (2h 15m)')
+  expect(await textOf(demo, /in: /)).toContain('in: 1.2M out: 45.6k')
+  expect(await textOf(demo, /^cost: \$12\.34$/)).toBe('cost: $12.34')
+  // The version stays the real one: the demo fakes only the figures.
+  expect(await textOf(demo, /^2\.1\.308$/)).toBe('2.1.308')
+  await demo.unmount()
+
+  await run('live')
+  const live = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(await textOf(live, /^main$/)).toBe('main')
+  expect(await ui_find_none(live)).toBe(true)
+  await live.unmount()
+})
+
+const ui_find_none = async (ui: Drawing) => (await ui.find({ type: 'Text', text: /claude-mods-login/ })) === undefined
+
 test('hidden in the store, the band leaves the drawing to the engine', async ($, on) => {
   const clock = mock.clock(on, { now: NOW })
   engine(on, { usage: usageOf(), files: {}, gitShape: SHAPE, gitStatus: STATUS, store: { isHidden: true } })

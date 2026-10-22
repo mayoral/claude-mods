@@ -52,6 +52,6 @@ export type Counters = {
 
 declare module 'claude-code' {
   interface PluginState {
-    statusline: { snapshot: Snapshot | null; counters: Counters; isHidden: boolean }
+    statusline: { snapshot: Snapshot | null; counters: Counters; isHidden: boolean; isDemo: boolean }
   }
 }

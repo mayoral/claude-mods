@@ -46,6 +46,8 @@ One slash command controls it:
 | `/statusband off` | Hides it, and keeps it hidden across sessions |
 | `/statusband on` | Shows it again |
 | `/statusband refresh` | Reads every figure again now |
+| `/statusband demo` | Fills every cell with made-up figures, for a screenshot |
+| `/statusband live` | Brings the real figures back |
 
 **Status line under the prompt.** Besides the band, the mod can pin a one-line summary under the prompt, as its own status line:
 
@@ -57,7 +59,7 @@ The desktop app hides the band behind its own next-step box, and the line is wha
 
 **Narrow bands.** The three columns are kept wherever they fit. The grid needs 118 cells (two columns of 40 and the widest rate cell); on a narrower band the columns and the bars shrink together, and only when a bar would fall under 8 cells do the cells reflow into two columns or one.
 
-**Diagnosing.** The mod registers one tool for the model, `mcp__statusline__inspect`, which reports what the band last drew (surface, width in cells, columns chosen, rows) and the figures it holds. When the band looks wrong, ask Claude to call it.
+**Diagnosing.** The mod registers one tool for the model, `mcp__statusline__inspect`, which reports what the band last drew (surface, width in cells, columns chosen, rows) and the figures it holds; with `demo` set it also switches the demo figures on or off. When the band looks wrong, ask Claude to call it.
 
 ## Configuration
 

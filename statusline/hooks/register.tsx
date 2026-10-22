@@ -168,6 +168,28 @@ const NO_COUNTERS: Counters = { linesAdded: 0, linesRemoved: 0, outputTokens: 0,
 const snapshot = atom({ plugin: 'statusline', key: 'snapshot' } as const, null)
 const counters = atom({ plugin: 'statusline', key: 'counters' } as const, NO_COUNTERS)
 const isHidden = atom({ plugin: 'statusline', key: 'isHidden' } as const, false)
+const isDemo = atom({ plugin: 'statusline', key: 'isDemo' } as const, false)
+
+// =====================
+// Demo: made-up figures that fill every cell, for screenshots
+// =====================
+
+const DEMO_COUNTERS: Counters = { linesAdded: 128, linesRemoved: 41, outputTokens: 45_600, apiMs: 12 * 60_000 + 40_000 }
+
+/** The snapshot's figures replaced by the demo's; the theme, appearance and version stay the real ones. */
+const demoFigures = (now: number, home: string): Partial<Snapshot> => ({
+  startedAt: now - (83 * 60_000 + 7_000),
+  model: 'claude-opus-5-5',
+  root: `${home || '/Users/me'}/workspace/claude-mods`,
+  contextPercent: 62,
+  inputTokens: 1_234_567,
+  rateLimits: [
+    { kind: 'five_hour', percentUsed: 81, resetsAt: new Date(now + 2 * 3_600_000 + 15 * 60_000).toISOString() },
+    { kind: 'seven_day', percentUsed: 34, resetsAt: new Date(now + 3 * 86_400_000 + 5 * 3_600_000).toISOString() },
+  ],
+  costUsd: 12.34,
+  git: { branch: 'feature/login', worktree: 'claude-mods-login', isDirty: true, ahead: 2, behind: 1 },
+})
 
 // =====================
 // Render primitives: a cell is a list of spans, empty when its data is absent
@@ -597,7 +619,7 @@ type RenderReport = {
 let layout: Layout = layoutOf({})
 let themeOption: ThemeOption = themeOf({})
 let statusLineOption: StatusLineOption = statusLineOf({})
-let refreshing = false
+let running: Promise<void> | null = null
 let refreshAgain = false
 let settle: Timer | null = null
 let lastRender: RenderReport | null = null
@@ -631,34 +653,43 @@ const takeSnapshot = async ($: EngineInterface): Promise<void> => {
     costUsd: usage.cost?.usd ?? null,
     git: await readGit($, cwd),
   }
-  await update($, snapshot, () => next)
+  const demo = await read($, isDemo)
+  await update($, snapshot, () => (demo ? { ...next, ...demoFigures(now, next.home) } : next))
 }
+
+/** The running totals, or the demo's while it is on. */
+const countersOf = async ($: EngineInterface): Promise<Counters> => ((await read($, isDemo)) ? DEMO_COUNTERS : read($, counters))
 
 /** Pins the one-line summary under the prompt, or clears it while the band is hidden or the line is not wanted. */
 const pinStatusLine = async ($: EngineInterface): Promise<void> => {
-  const [snap, count, hidden, surfaces] = await Promise.all([read($, snapshot), read($, counters), read($, isHidden), $.session.surfaces()])
+  const [snap, count, hidden, surfaces] = await Promise.all([read($, snapshot), countersOf($), read($, isHidden), $.session.surfaces()])
   const isWanted = statusLineOption === 'always' || (statusLineOption === 'desktop' && surfaces.includes('desktop'))
   $.ui.status(isWanted && !hidden && snap !== null ? compactLineOf(snap, count) : undefined)
 }
 
-/** Takes a snapshot; a call made while one is taken queues one more. */
-const refresh = async ($: EngineInterface): Promise<void> => {
-  if (refreshing) {
+/**
+ * Takes a snapshot; a call made while one is taken queues one more and
+ * resolves with it, so the caller's change is in the snapshot it sees.
+ */
+const refresh = ($: EngineInterface): Promise<void> => {
+  if (running !== null) {
     refreshAgain = true
-    return
+    return running
   }
-  refreshing = true
-  try {
-    do {
-      refreshAgain = false
-      await takeSnapshot($)
-    } while (refreshAgain)
-    await pinStatusLine($)
-  } catch (error) {
-    $.ui.log(`statusline: refresh failed: ${String(error)}`, { to: 'debug' })
-  } finally {
-    refreshing = false
-  }
+  running = (async () => {
+    try {
+      do {
+        refreshAgain = false
+        await takeSnapshot($)
+      } while (refreshAgain)
+      await pinStatusLine($)
+    } catch (error) {
+      $.ui.log(`statusline: refresh failed: ${String(error)}`, { to: 'debug' })
+    } finally {
+      running = null
+    }
+  })()
+  return running
 }
 
 /** Refreshes once the tool calls have settled. */
@@ -691,13 +722,17 @@ export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: COMMAND,
-      description: 'Shows, hides or refreshes the status band above the prompt.',
-      argumentHint: '[on|off|refresh]',
+      description: 'Shows, hides or refreshes the status band above the prompt; demo fills it with made-up figures, live brings the real ones back.',
+      argumentHint: '[on|off|refresh|demo|live]',
     })
     await $.tool.register({
       name: 'inspect',
       description:
-        'Reports what the statusline band last drew (surface, width in cells, columns chosen, rows) and the figures it holds. For diagnosing the band; it changes nothing.',
+        'Reports what the statusline band last drew (surface, width in cells, columns chosen, rows) and the figures it holds. With `demo` true the band shows made-up figures that fill every cell (for screenshots); false brings the real ones back. Otherwise it changes nothing.',
+      inputSchema: {
+        type: 'object',
+        properties: { demo: { type: 'boolean', description: 'Turn the demo figures on or off before reporting.' } },
+      },
     })
     try {
       if ((await $.store.get(HIDDEN_KEY)) === true) await update($, isHidden, () => true)
@@ -716,6 +751,11 @@ export const register: Register = (on, options) => {
       await refresh($)
       return { text: 'Status band refreshed.' }
     }
+    if (arg === 'demo' || arg === 'live') {
+      await update($, isDemo, () => arg === 'demo')
+      await refresh($)
+      return { text: arg === 'demo' ? `Status band showing demo figures; /${COMMAND} live brings the real ones back.` : 'Status band showing the real figures.' }
+    }
     const hide = arg === 'off' ? true : arg === 'on' ? false : !(await read($, isHidden))
     await update($, isHidden, () => hide)
     try {
@@ -727,11 +767,16 @@ export const register: Register = (on, options) => {
     return { text: hide ? `Status band hidden; /${COMMAND} on shows it again.` : 'Status band shown.' }
   }).catch(() => ({ text: 'statusline: the command failed; the debug log says why.' }))
 
-  on('tool.call', { tool: INSPECT_TOOL }, async $ => {
-    const [snap, count, hidden] = await Promise.all([read($, snapshot), read($, counters), read($, isHidden)])
+  on('tool.call', { tool: INSPECT_TOOL }, async ($, e) => {
+    const { demo } = e as unknown as { demo?: unknown }
+    if (typeof demo === 'boolean') {
+      await update($, isDemo, () => demo)
+      await refresh($)
+    }
+    const [snap, count, hidden, isDemoOn] = await Promise.all([read($, snapshot), countersOf($), read($, isHidden), read($, isDemo)])
     const options = { ...layout, theme: themeOption, statusLine: statusLineOption }
     // A tool's result is text (or content blocks): the report as JSON.
-    return { result: JSON.stringify({ lastRender, options, isHidden: hidden, snapshot: snap, counters: count }, null, 2) }
+    return { result: JSON.stringify({ lastRender, options, isHidden: hidden, isDemo: isDemoOn, snapshot: snap, counters: count }, null, 2) }
   }).catch(() => ({ deny: 'statusline: the inspect tool failed; the debug log says why.' }))
 
   // A change of the Theme setting changes the palette.
@@ -808,7 +853,7 @@ export const register: Register = (on, options) => {
       report(false, fit, 0)
       return next(e)
     }
-    const [snap, count, hidden] = await Promise.all([read($, snapshot), read($, counters), read($, isHidden)])
+    const [snap, count, hidden] = await Promise.all([read($, snapshot), countersOf($), read($, isHidden)])
     if (hidden || snap === null) {
       report(false, fit, 0)
       return next(e)
