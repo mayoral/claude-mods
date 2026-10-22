@@ -6,6 +6,8 @@ Mods I find useful when working with Claude, mainly [Claude Code](https://claude
 |---|---|
 | [`statusline`](./statusline) | Draws the [claude-statusline](https://github.com/mayoral/claude-statusline) status line as a band above the prompt: context bar, rate limits, git branch, lines changed, tokens and cost, with Catppuccin colors that follow light and dark mode. Works in the desktop app and in the terminal. |
 
+![The statusline band in the desktop app](statusline/docs/band-dark.png)
+
 ## Installing a mod
 
 Each mod's folder has a README with its own install, use and configuration notes. The steps are the same for all of them; `statusline` stands in for any mod below.

@@ -9,6 +9,10 @@ Lines changed    | Worktree | Git branch
 Session duration | Tokens   | Cost
 ```
 
+![The band in the desktop app, dark mode](docs/band-dark.png)
+
+![The band in the desktop app, light mode](docs/band-light.png)
+
 - **Context bar**: a progress bar for context-window usage, green under 50 %, yellow under 80 %, red past it.
 - **Rate limits**: the 5-hour and 7-day usage bars, each with a `(2d 3h)`-style countdown to its reset.
 - **Git**: the current branch (or `@sha` when detached), a dirty marker (`*`), ahead/behind arrows (`↑2 ↓1`) and a `wt:` cell inside a linked worktree.
@@ -52,9 +56,9 @@ One slash command controls it:
 
 **Status line under the prompt.** Besides the band, the mod can pin a one-line summary under the prompt, as its own status line:
 
-```
-Context 46% · 5h 38% (2h 55m) · 7d 43% (1d 4h) · main* · +0 -0 · $26.77
-```
+![The status line under the prompt, dark mode](docs/statusline-dark.png)
+
+![The status line under the prompt, light mode](docs/statusline-light.png)
 
 The desktop app hides the band behind its own next-step box, and the line is what stays readable there, so by default it is pinned only while the desktop app is attached. The `statusLine` option pins it always, or never. It follows `/statusband` on and off.
 
