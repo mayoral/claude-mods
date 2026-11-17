@@ -14,6 +14,7 @@ const BAND = {
   component: 'AbovePrompt',
   props: {
     hasSurvey: false,
+    isCollapsed: false,
     isWorking: false,
     maxRows: 12,
     bodyColumns: 160,
@@ -96,7 +97,10 @@ const engine = (on: On, world: World) => {
     if (e.tool === 'Write') world.files[e.file_path] = e.content
     return { result: {} }
   })
-  on('ui.render', ($, e) => {
+  // Beneath the mod's own band row: drawn only where the mod passes. A hook
+  // that names no plugin hears its own drawings alone, and would draw a row of
+  // the test's beside the mod's instead.
+  on('ui.render', { plugin: 'statusline' }, ($, e) => {
     const { Text } = $.ui.resolve(e)
     return <Text>engine</Text>
   })
@@ -465,6 +469,7 @@ test('with the band set to desktop, a terminal leaves the drawing to the engine'
   await clock.settle()
 
   const terminal = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect(await textOf(terminal, /^engine$/)).toBe('engine')
   expect(await terminal.find({ type: 'Text', text: /Model: / })).toBeUndefined()
   expect(await terminal.find({ type: 'Text', text: /Context: / })).toBeUndefined()
   await terminal.unmount()
@@ -473,6 +478,7 @@ test('with the band set to desktop, a terminal leaves the drawing to the engine'
   const desktop = await $.ui.mount({ ...BAND, surface: 'desktop' })
   expect(await textOf(desktop, /^Fable 5\.1$/)).toBe('Fable 5.1')
   expect(await textOf(desktop, /Context: /)).toContain(' 42%')
+  expect(await desktop.find({ type: 'Text', text: /^engine$/ })).toBeUndefined()
   await desktop.unmount()
 })
 
