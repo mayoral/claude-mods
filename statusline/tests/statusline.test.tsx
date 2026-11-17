@@ -457,6 +457,25 @@ test('hidden in the store, the band leaves the drawing to the engine', async ($,
   await ui.unmount()
 })
 
+test('with the band set to desktop, a terminal leaves the drawing to the engine', { options: { band: 'desktop' } }, async ($, on) => {
+  const clock = mock.clock(on, { now: NOW })
+  engine(on, { usage: usageOf(), files: {}, gitShape: SHAPE, gitStatus: STATUS, surfaces: ['terminal', 'desktop'] })
+
+  await $.session.start({ cwd: ROOT, surface: 'terminal', isInteractive: true })
+  await clock.settle()
+
+  const terminal = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect(await terminal.find({ type: 'Text', text: /Model: / })).toBeUndefined()
+  expect(await terminal.find({ type: 'Text', text: /Context: / })).toBeUndefined()
+  await terminal.unmount()
+
+  // The same session drawn in the desktop app still gets the band.
+  const desktop = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(await textOf(desktop, /^Fable 5\.1$/)).toBe('Fable 5.1')
+  expect(await textOf(desktop, /Context: /)).toContain(' 42%')
+  await desktop.unmount()
+})
+
 test('outside a repository the git cells are left out', async ($, on) => {
   const clock = mock.clock(on, { now: NOW })
   engine(on, { usage: usageOf(), files: {}, gitShape: '', gitStatus: '', gitExitCode: 128 })

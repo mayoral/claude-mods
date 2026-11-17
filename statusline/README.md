@@ -62,6 +62,8 @@ One slash command controls it:
 
 The desktop app hides the band behind its own next-step box, and the line is what stays readable there, so by default it is pinned only while the desktop app is attached. The `statusLine` option pins it always, or never. It follows `/statusband` on and off.
 
+**Desktop app only.** Where the terminal already runs the script as its own status line (the `statusLine` command in `~/.claude/settings.json`), set `band` to `desktop`: the terminal then draws no band and keeps the script's line alone, while the desktop app still draws the band. With `statusLine` left at `desktop`, the mod pins nothing under a terminal's prompt either.
+
 **Narrow bands.** The three columns are kept wherever they fit. The grid needs 118 cells (two columns of 40 and the widest rate cell); on a narrower band the columns and the bars shrink together, and only when a bar would fall under 8 cells do the cells reflow into two columns or one.
 
 **Diagnosing.** The mod registers one tool for the model, `mcp__statusline__inspect`, which reports what the band last drew (surface, width in cells, columns chosen, rows) and the figures it holds; with `demo` set it also switches the demo figures on or off. When the band looks wrong, ask Claude to call it.
@@ -73,6 +75,7 @@ The options live in `/config`, under the plugin's rows, or are set with `claude 
 | Option | Meaning | Default |
 |---|---|---|
 | `theme` | `catppuccin` (Latte or Mocha by the mode in use), `catppuccin-latte`, `catppuccin-mocha` (one of them, always) or `default` (the script's terminal colors) | `catppuccin` |
+| `band` | Where the band above the prompt is drawn: `always` (every surface) or `desktop` (the desktop app alone) | `always` |
 | `statusLine` | The one-line summary under the prompt: `desktop` (while the desktop app is attached), `always` or `off` | `desktop` |
 | `col1Width` | Width of the first column, in cells | `40` |
 | `col2Width` | Width of the second column, in cells | `40` |

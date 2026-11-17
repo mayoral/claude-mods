@@ -31,6 +31,18 @@ const themeOf = (options: PluginOptions): ThemeOption =>
   THEME_OPTIONS.find(one => one === options.theme) ?? 'catppuccin'
 
 /**
+ * Where the band above the prompt is drawn: on every surface, or on the
+ * desktop app's alone, so a terminal keeps just its own status line command.
+ */
+type BandOption = 'always' | 'desktop'
+const BAND_OPTIONS: readonly BandOption[] = ['always', 'desktop']
+
+const bandOf = (options: PluginOptions): BandOption => BAND_OPTIONS.find(one => one === options.band) ?? 'always'
+
+/** Whether the band is drawn on this surface under the option. */
+const isBandShownOn = (option: BandOption, surface: string): boolean => option === 'always' || surface === 'desktop'
+
+/**
  * When a one-line summary is also pinned under the prompt, as the plugin's
  * status line: with a desktop surface attached (the app hides the band
  * behind its next-step box), always, or never.
@@ -625,6 +637,7 @@ type RenderReport = {
 
 let layout: Layout = layoutOf({})
 let themeOption: ThemeOption = themeOf({})
+let bandOption: BandOption = bandOf({})
 let statusLineOption: StatusLineOption = statusLineOf({})
 let running: Promise<void> | null = null
 let refreshAgain = false
@@ -726,6 +739,7 @@ const add = ($: EngineInterface, change: Partial<Counters>): Promise<Counters> =
 export const register: Register = (on, options) => {
   layout = layoutOf(options)
   themeOption = themeOf(options)
+  bandOption = bandOf(options)
   statusLineOption = statusLineOf(options)
 
   on('session.start', async ($, e, next) => {
@@ -783,7 +797,7 @@ export const register: Register = (on, options) => {
       await refresh($)
     }
     const [snap, count, hidden, isDemoOn] = await Promise.all([read($, snapshot), countersOf($), read($, isHidden), read($, isDemo)])
-    const options = { ...layout, theme: themeOption, statusLine: statusLineOption }
+    const options = { ...layout, theme: themeOption, band: bandOption, statusLine: statusLineOption }
     // A tool's result is text (or content blocks): the report as JSON.
     return { result: JSON.stringify({ lastRender, options, isHidden: hidden, isDemo: isDemoOn, snapshot: snap, counters: count }, null, 2) }
   }).catch(() => ({ deny: 'statusline: the inspect tool failed; the debug log says why.' }))
@@ -859,6 +873,10 @@ export const register: Register = (on, options) => {
     const fit = fitOf(layout, e.props.bodyColumns)
     if (e.props.hasSurvey) {
       surveyAsks += 1
+      report(false, fit, 0)
+      return next(e)
+    }
+    if (!isBandShownOn(bandOption, e.surface)) {
       report(false, fit, 0)
       return next(e)
     }

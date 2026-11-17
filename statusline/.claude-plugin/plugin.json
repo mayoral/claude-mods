@@ -1,6 +1,6 @@
 {
   "name": "statusline",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Status band above the prompt: context bar, rate limits, git branch, lines changed, tokens and cost, like the claude-statusline script.",
   "license": "MIT",
   "author": {
@@ -20,6 +20,16 @@
         "default"
       ],
       "default": "catppuccin"
+    },
+    "band": {
+      "title": "Where the band is drawn",
+      "type": "string",
+      "description": "always draws the band above the prompt on every surface; desktop draws it in the desktop app alone, so a terminal keeps just its own status line command",
+      "options": [
+        "always",
+        "desktop"
+      ],
+      "default": "always"
     },
     "statusLine": {
       "title": "Status line under the prompt",
